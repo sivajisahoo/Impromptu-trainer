@@ -3,103 +3,117 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Impromptu Trainer — Triple Step & Rapid Fire</title>
+<title>Impromptu Trainer — Sequential Words + Pie Timer</title>
 <style>
-  body{font-family:system-ui,Segoe UI,Roboto,Arial;max-width:900px;margin:24px auto;color:#111}
-  h1{margin:0 0 12px;font-size:20px}
+  :root{--bg:#ffffff;--fg:#0f172a;--muted:#6b7280;--accent:#0ea5a4}
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;margin:20px auto;max-width:960px;color:var(--fg);background:var(--bg)}
+  h1{font-size:20px;margin:0 0 12px}
   .row{display:flex;gap:12px;flex-wrap:wrap}
-  .card{border:1px solid #ddd;border-radius:8px;padding:12px;flex:1 1 300px}
-  label{display:block;margin:8px 0 4px;font-size:13px}
-  input,select,textarea,button{padding:8px;border-radius:6px;border:1px solid #ccc;font-size:14px}
-  button{cursor:pointer}
-  .big{font-size:28px;font-weight:600;margin:8px 0}
-  .words{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-  .chip{background:#f2f2f2;padding:6px 10px;border-radius:16px}
-  table{width:100%;border-collapse:collapse;margin-top:12px}
-  th,td{border:1px solid #e6e6e6;padding:6px;text-align:left;font-size:13px}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  .card{border:1px solid #e6e8eb;border-radius:10px;padding:14px;flex:1 1 320px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,0.02)}
+  label{display:block;font-size:13px;color:var(--muted);margin-top:10px}
+  input,select,textarea,button{padding:8px;border-radius:8px;border:1px solid #d1d5db;font-size:14px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .btn{background:#0f172a;color:#fff;padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
+  .btn.secondary{background:#eef2ff;color:#111;border:1px solid #e6e9ff}
+  .big{font-size:28px;font-weight:700;margin-top:6px}
+  .display{display:flex;align-items:center;gap:18px}
+  .wordspan{font-size:30px;font-weight:600;min-width:220px;text-align:center}
+  .pie-wrap{width:110px;height:110px;position:relative}
+  .pie{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--accent) 0deg, #e6eef0 0deg)}
+  .pie .inner{width:78%;height:78%;border-radius:50%;background:#fff;display:grid;place-items:center;font-weight:700}
   .small{font-size:12px;padding:6px 8px}
-  .log{max-height:200px;overflow:auto;border:1px solid #eee;padding:8px;margin-top:8px;background:#fafafa}
+  .log{max-height:260px;overflow:auto;border:1px solid #f1f5f9;padding:10px;margin-top:10px;background:#fbfdff}
+  .chip{display:inline-block;background:#f3f4f6;padding:6px 10px;border-radius:999px;margin:4px}
+  footer{margin-top:18px;font-size:13px;color:var(--muted)}
+  @media(max-width:720px){ .display{flex-direction:column;align-items:stretch} .wordspan{font-size:22px} }
 </style>
 </head>
 <body>
-<h1>Impromptu Trainer — Triple Step & Rapid Fire</h1>
+<h1>Impromptu Trainer — Sequential Words + Pie Timer</h1>
 
 <div class="row">
   <div class="card">
-    <strong>Mode</strong>
-    <div style="margin-top:8px">
-      <select id="mode">
-        <option value="triple">Triple Step</option>
-        <option value="rapid">Rapid Fire</option>
-      </select>
-    </div>
+    <strong>Settings</strong>
+    <label>Mode</label>
+    <select id="mode">
+      <option value="triple">Triple Step (pick N words sequentially)</option>
+      <option value="rapid">Rapid Fire (continuous prompts)</option>
+    </select>
 
     <label>Topic / Instruction (for Triple Step)</label>
     <input id="topic" placeholder="E.g., What makes me resilient" />
 
-    <label>Custom prompt list (one per line)</label>
-    <textarea id="customList" rows="6" placeholder="Write words / prompts / analogies here. One per line."></textarea>
-
-    <label>Preset lists</label>
+    <label>Preset list / Custom (custom overrides preset)</label>
     <select id="preset">
       <option value="default">Default word bank</option>
       <option value="everyday">Everyday objects</option>
-      <option value="emotions">Emotions / traits</option>
-      <option value="analogies">Analogy starters (for Rapid Fire)</option>
+      <option value="emotions">Emotions</option>
+      <option value="analogies">Analogy starters (Rapid)</option>
     </select>
+    <textarea id="customList" rows="4" placeholder="Optional: one prompt per line to override preset" style="width:100%;margin-top:8px"></textarea>
 
-    <div style="margin-top:8px">
-      <label>Words per round (Triple Step)</label>
-      <input id="wordsCount" type="number" value="6" min="1" />
-      <label style="margin-top:8px">Round length seconds</label>
-      <input id="roundTime" type="number" value="60" min="5" />
+    <label>Words per round (Triple Step)</label>
+    <input id="wordsCount" type="number" value="6" min="1" />
+
+    <label>Per-word interval (seconds)</label>
+    <input id="wordInterval" type="number" value="10" min="1" />
+
+    <label>Rapid Fire: interval (ms) & reps</label>
+    <div style="display:flex;gap:8px">
+      <input id="rapidInterval" type="number" value="3000" min="200" style="width:120px" />
+      <input id="rapidCount" type="number" value="20" min="1" style="width:120px" />
     </div>
 
-    <div style="margin-top:8px">
-      <label>Rapid Fire: interval ms</label>
-      <input id="rapidInterval" type="number" value="3000" min="300" />
-      <label style="margin-top:8px">Reps (Rapid Fire)</label>
-      <input id="rapidCount" type="number" value="20" min="1" />
+    <div class="controls">
+      <button id="start" class="btn">Start</button>
+      <button id="pause" class="btn secondary" id="pauseBtn">Pause</button>
+      <button id="stop" class="btn secondary">Stop</button>
+      <button id="next" class="btn secondary">Next</button>
     </div>
+
+    <label style="margin-top:8px">Score / Notes (optional)</label>
+    <input id="score" placeholder="7/10, notes..." />
   </div>
 
   <div class="card">
-    <strong>Session</strong>
-    <div class="big" id="timer">00:00</div>
-    <div id="currentDisplay" class="big">Ready</div>
-
-    <div class="controls">
-      <button id="start" class="small">Start</button>
-      <button id="pause" class="small">Pause</button>
-      <button id="stop" class="small">Stop</button>
-      <button id="next" class="small">Next (Rapid)</button>
-      <button id="save" class="small">Save session</button>
-      <button id="export" class="small">Export CSV</button>
-      <button id="clearLog" class="small">Clear Log</button>
-    </div>
-
-    <div style="margin-top:10px">
-      <label>Score / Notes</label>
-      <input id="score" placeholder="E.g., 7/10 or notes" />
+    <strong>Live</strong>
+    <div class="display" style="margin-top:8px">
+      <div class="pie-wrap" aria-hidden="true">
+        <div id="pie" class="pie"><div class="inner" id="pieInner">10s</div></div>
+      </div>
+      <div style="flex:1">
+        <div class="big" id="roundLabel">Ready</div>
+        <div class="wordspan" id="wordDisplay">—</div>
+        <div style="margin-top:8px;color:var(--muted)">Upcoming: <span id="upcoming" class="chip">none</span></div>
+      </div>
     </div>
 
     <div style="margin-top:12px">
       <strong>Current word set</strong>
-      <div class="words" id="wordsArea"></div>
+      <div id="wordsArea" style="margin-top:10px"></div>
+    </div>
+
+    <div style="margin-top:12px">
+      <button id="save" class="btn secondary">Save session (local)</button>
+      <button id="export" class="btn">Export CSV</button>
+      <button id="clearLog" class="btn secondary">Clear Log</button>
     </div>
   </div>
 </div>
 
 <div class="card" style="margin-top:12px">
-  <strong>Session Log</strong>
+  <strong>Session Log (localStorage)</strong>
   <div class="log" id="log"></div>
 </div>
 
+<footer>Keyboard: Space = start/pause, N = next</footer>
+
 <script>
+/* Sequential words + pie timer. No backend. Local logs saved to localStorage. */
+
 const presetBanks = {
-  default: ["apple","bridge","clock","river","honesty","engine","salt","window","path","mirror","fear","laughter","book","market","lamp","journey","anchor","signal","forest","ticket","home","courage","summer","decision","music","chair"],
-  everyday: ["cup","phone","key","door","shoe","bag","pen","table","bus","car","light","glass","plate","bed","shoe"],
+  default: ["courage","mirror","river","bridge","lamp","truth","forest","anchor","music","hope","curiosity","mountain","storm","compass","book","laughter","journey","shadow","clock","window","light","fear","confidence","persistence","decision","friendship","gratitude","coffee","road","rain","fire","balance","patience","time","goal","habit","seed","tree","teamwork","ocean","learning","energy","focus","reflection","change","challenge","risk","failure","success","discipline"],
+  everyday: ["cup","phone","key","door","shoe","bag","pen","table","bus","car","light","glass","plate","bed"],
   emotions: ["joy","anger","curiosity","envy","pride","shame","gratitude","anxiety","surprise","calm","boredom","hope"],
   analogies: [
     "Sun is to day as moon is to ___",
@@ -112,182 +126,234 @@ const presetBanks = {
   ]
 };
 
-const state = {
-  mode: 'triple',
-  words: [],
-  timerId: null,
-  remaining: 0,
-  running:false,
-  rapidIndex:0,
-  rapidCount:20
-};
-
 const el = id => document.getElementById(id);
-const saveLog = (entry) => {
-  const logs = JSON.parse(localStorage.getItem('impromptuLogs')||'[]');
-  logs.unshift(entry);
-  localStorage.setItem('impromptuLogs', JSON.stringify(logs.slice(0,200)));
-  renderLog();
+const state = {
+  mode:'triple',
+  words:[],
+  index:0,
+  running:false,
+  perWordSecs:10,
+  timerInterval:null,
+  pieAngle:0,
+  remainingMs:0
 };
 
-function renderLog(){
-  const logs = JSON.parse(localStorage.getItem('impromptuLogs')||'[]');
-  const out = logs.map(l => `<div><strong>${l.mode.toUpperCase()}</strong> ${l.when} — topic:${escapeHtml(l.topic||'')} score:${escapeHtml(l.score||'')} <div style="font-size:12px;color:#555">${escapeHtml(l.words||'')}</div></div>`).join('');
-  el('log').innerHTML = out || '<small>No sessions yet.</small>';
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function loadPreset(){
+  const custom = (el('customList').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  if(custom.length) return custom;
+  const p = el('preset').value;
+  return Array.isArray(presetBanks[p]) ? presetBanks[p].slice() : presetBanks.default.slice();
 }
 
-function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function pickWords(n, bank){
-  const arr = bank.slice();
+function pickNRandom(n, bank){
+  const src = bank.slice();
   const out=[];
-  while(out.length<n && arr.length){
-    const i = Math.floor(Math.random()*arr.length);
-    out.push(arr.splice(i,1)[0]);
+  while(out.length<n && src.length){
+    const i = Math.floor(Math.random()*src.length);
+    out.push(src.splice(i,1)[0]);
   }
   return out;
 }
 
-function loadPreset(){
-  const p = el('preset').value;
-  const custom = (el('customList').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
-  if(custom.length) return custom;
-  return presetBanks[p] || presetBanks.default;
+function renderWordsArea(){
+  el('wordsArea').innerHTML = state.words.map((w,i)=>`<span class="chip">${escapeHtml(w)}</span>`).join(' ');
 }
 
-function startTriple(){
-  const wordsCount = Math.max(1,parseInt(el('wordsCount').value||6));
-  const bank = loadPreset();
-  state.words = pickWords(wordsCount, bank);
-  el('wordsArea').innerHTML = state.words.map(w=>`<div class="chip">${escapeHtml(w)}</div>`).join('');
-  const secs = Math.max(5, parseInt(el('roundTime').value||60));
-  state.remaining = secs;
-  el('currentDisplay').textContent = el('topic').value || 'Triple Step';
-  tickDisplay();
-  runTimer(() => {
-    state.running = false;
-    saveLog({mode:'triple',when:new Date().toLocaleString(),topic:el('topic').value||'',words:state.words.join(', '),score:el('score').value||''});
-  });
+function renderUpcoming(){
+  const upcoming = state.words.slice(state.index+1, state.index+4).join(', ') || 'none';
+  el('upcoming').textContent = upcoming;
 }
 
-function startRapid(){
-  const bank = loadPreset();
-  state.rapidCount = Math.max(1,parseInt(el('rapidCount').value||20));
-  state.rapidInterval = Math.max(200,parseInt(el('rapidInterval').value||3000));
-  state.words = bank.slice();
-  state.rapidIndex = 0;
-  el('wordsArea').innerHTML = '';
-  el('currentDisplay').textContent = 'Rapid Fire';
-  tickDisplay();
+function setPieProgress(fraction){
+  // fraction 0..1
+  const angle = Math.max(0, Math.min(1,fraction)) * 360;
+  el('pie').style.background = `conic-gradient(var(--accent) 0deg, var(--accent) ${angle}deg, #e6eef0 ${angle}deg)`;
+  // inner label seconds
+  const secs = Math.ceil(state.remainingMs/1000);
+  el('pieInner').textContent = secs + 's';
+}
+
+function startSequence(){
+  // decide mode and words
+  state.mode = el('mode').value;
+  state.perWordSecs = Math.max(1, parseInt(el('wordInterval').value||10));
+  if(state.mode === 'triple'){
+    const n = Math.max(1, parseInt(el('wordsCount').value||6));
+    const bank = loadPreset();
+    state.words = pickNRandom(n, bank);
+  } else {
+    state.words = loadPreset();
+    // rapid overrides: use rapidCount reps maybe; behave like repeating through array
+    const reps = Math.max(1, parseInt(el('rapidCount').value||20));
+    // expand list to reps length by cycling
+    const out = [];
+    for(let i=0;i<reps;i++) out.push( state.words[i % state.words.length] );
+    state.words = out;
+  }
+  state.index = 0;
+  renderWordsArea();
+  el('roundLabel').textContent = `${state.mode === 'triple' ? 'Triple Step' : 'Rapid Fire'} — ${state.words.length} items`;
+  startWordTimer();
+}
+
+function startWordTimer(){
+  stopTimer(); // clear existing
+  if(state.index >= state.words.length){
+    finishSequence();
+    return;
+  }
   state.running = true;
-  state.timerId = setInterval(() => {
-    if(state.rapidIndex >= state.rapidCount){
-      stopTimer();
-      saveLog({mode:'rapid',when:new Date().toLocaleString(),topic:'Rapid session',words:`${state.rapidIndex} reps`,score:el('score').value||''});
+  state.remainingMs = state.perWordSecs * 1000;
+  updateDisplayForIndex();
+  // tick every 100ms for smooth pie
+  state.timerInterval = setInterval(()=>{
+    state.remainingMs -= 100;
+    if(state.remainingMs <= 0){
+      // move to next
+      state.remainingMs = 0;
+      setPieProgress(0);
+      clearInterval(state.timerInterval);
+      state.index++;
+      // short delay 200ms then next
+      setTimeout(()=> {
+        if(state.index < state.words.length){
+          startWordTimer();
+        } else {
+          finishSequence();
+        }
+      }, 150);
       return;
     }
-    const item = state.words.length ? state.words[state.rapidIndex % state.words.length] : `Prompt ${state.rapidIndex+1}`;
-    el('currentDisplay').textContent = item;
-    state.rapidIndex++;
-    tickDisplay();
-  }, state.rapidInterval);
+    setPieProgress(state.remainingMs / (state.perWordSecs*1000));
+  },100);
 }
 
-function runTimer(callbackOnEnd){
-  clearInterval(state.timerId);
-  state.running = true;
-  el('pause').disabled = false;
-  state.timerId = setInterval(()=> {
-    state.remaining--;
-    tickDisplay();
-    if(state.remaining <= 0){
-      clearInterval(state.timerId);
-      state.running = false;
-      el('currentDisplay').textContent = 'Time up';
-      if(typeof callbackOnEnd === 'function') callbackOnEnd();
-    }
-  },1000);
-}
-
-function stopTimer(){
-  clearInterval(state.timerId);
-  state.running = false;
-  el('currentDisplay').textContent = 'Stopped';
-  el('timer').textContent = '00:00';
-  state.remaining = 0;
+function updateDisplayForIndex(){
+  const w = state.words[state.index] || '—';
+  el('wordDisplay').textContent = w;
+  renderUpcoming();
+  setPieProgress(1); // start full
 }
 
 function pauseTimer(){
   if(!state.running) return;
-  clearInterval(state.timerId);
   state.running = false;
-  el('currentDisplay').textContent = 'Paused';
+  clearInterval(state.timerInterval);
+  el('roundLabel').textContent = 'Paused';
 }
 
-function tickDisplay(){
-  const mm = String(Math.floor(state.remaining/60)).padStart(2,'0');
-  const ss = String(state.remaining%60).padStart(2,'0');
-  el('timer').textContent = `${mm}:${ss}`;
-}
-
-function nextRapid(){
-  if(!state.running) return;
-  clearInterval(state.timerId);
-  const item = state.words.length ? state.words[state.rapidIndex % state.words.length] : `Prompt ${state.rapidIndex+1}`;
-  el('currentDisplay').textContent = item;
-  state.rapidIndex++;
-  state.timerId = setInterval(()=> {
-    if(state.rapidIndex >= state.rapidCount){
-      stopTimer();
-      saveLog({mode:'rapid',when:new Date().toLocaleString(),topic:'Rapid session',words:`${state.rapidIndex} reps`,score:el('score').value||''});
+function resumeTimer(){
+  if(state.running) return;
+  if(state.index >= state.words.length) return;
+  state.running = true;
+  // continue ticking from remainingMs
+  state.timerInterval = setInterval(()=>{
+    state.remainingMs -= 100;
+    if(state.remainingMs <= 0){
+      state.remainingMs = 0;
+      setPieProgress(0);
+      clearInterval(state.timerInterval);
+      state.index++;
+      setTimeout(()=> {
+        if(state.index < state.words.length){
+          startWordTimer();
+        } else {
+          finishSequence();
+        }
+      },150);
       return;
     }
-    const it = state.words.length ? state.words[state.rapidIndex % state.words.length] : `Prompt ${state.rapidIndex+1}`;
-    el('currentDisplay').textContent = it;
-    state.rapidIndex++;
-  }, state.rapidInterval);
+    setPieProgress(state.remainingMs / (state.perWordSecs*1000));
+  },100);
+  el('roundLabel').textContent = `${state.mode === 'triple' ? 'Triple Step' : 'Rapid Fire'}`;
 }
 
-el('mode').addEventListener('change', e=>{
-  state.mode = e.target.value;
-});
-el('preset').addEventListener('change', ()=>{});
-el('start').addEventListener('click', ()=>{
-  if(state.mode === 'triple' || el('mode').value==='triple'){
-    startTriple();
+function stopTimer(){
+  clearInterval(state.timerInterval);
+  state.running=false;
+  state.index = 0;
+  state.words = [];
+  el('wordDisplay').textContent = '—';
+  el('roundLabel').textContent = 'Stopped';
+  el('wordsArea').innerHTML = '';
+  el('upcoming').textContent = 'none';
+  setPieProgress(0);
+}
+
+function nextWordManual(){
+  // jump to next word immediately
+  clearInterval(state.timerInterval);
+  state.index++;
+  if(state.index < state.words.length){
+    startWordTimer();
   } else {
-    startRapid();
+    finishSequence();
   }
-});
-el('pause').addEventListener('click', pauseTimer);
-el('stop').addEventListener('click', stopTimer);
-el('next').addEventListener('click', nextRapid);
-el('save').addEventListener('click', ()=>{
-  saveLog({mode: el('mode').value, when:new Date().toLocaleString(), topic: el('topic').value||'', words: (state.words||[]).join(', '), score: el('score').value||''});
-  alert('Saved to local log.');
-});
-el('clearLog').addEventListener('click', ()=>{
-  if(confirm('Clear saved sessions?')){ localStorage.removeItem('impromptuLogs'); renderLog(); }
-});
-el('export').addEventListener('click', ()=>{
-  const logs = JSON.parse(localStorage.getItem('impromptuLogs')||'[]');
+}
+
+function finishSequence(){
+  clearInterval(state.timerInterval);
+  state.running=false;
+  el('roundLabel').textContent = 'Finished';
+  el('wordDisplay').textContent = 'Done';
+  saveLog({mode:state.mode, when:new Date().toLocaleString(), topic: el('topic').value||'', words: state.words.join(' | '), score: el('score').value||''});
+  renderLog();
+}
+
+/* Logging */
+function saveLog(entry){
+  const logs = JSON.parse(localStorage.getItem('impromptuLogs') || '[]');
+  logs.unshift(entry);
+  localStorage.setItem('impromptuLogs', JSON.stringify(logs.slice(0,500)));
+}
+function renderLog(){
+  const logs = JSON.parse(localStorage.getItem('impromptuLogs') || '[]');
+  if(!logs.length){ el('log').innerHTML = '<small>No sessions yet.</small>'; return; }
+  el('log').innerHTML = logs.map(l => `<div style="margin-bottom:8px"><strong>${escapeHtml(l.mode)}</strong> • ${escapeHtml(l.when)} • ${escapeHtml(l.topic||'')}<div style="font-size:13px;color:${'#374151'};margin-top:4px">${escapeHtml(l.words)}</div><div style="font-size:12px;color:${'#6b7280'}">score: ${escapeHtml(l.score||'')}</div></div>`).join('');
+}
+
+/* CSV export */
+function exportCSV(){
+  const logs = JSON.parse(localStorage.getItem('impromptuLogs') || '[]');
   if(!logs.length){ alert('No sessions to export.'); return; }
-  const csv = ['mode,when,topic,words,score', ...logs.map(l=>`${csvSafe(l.mode)},${csvSafe(l.when)},${csvSafe(l.topic)},${csvSafe(l.words)},${csvSafe(l.score)}`)].join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
+  const rows = ['mode,when,topic,words,score', ...logs.map(l => `${csvSafe(l.mode)},${csvSafe(l.when)},${csvSafe(l.topic)},${csvSafe(l.words)},${csvSafe(l.score)}`)];
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'impromptu_sessions.csv';
-  document.body.appendChild(a); a.click(); a.remove();
-  URL.revokeObjectURL(url);
-});
+  const a = document.createElement('a'); a.href = url; a.download = 'impromptu_sessions.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+}
 function csvSafe(v){ return `"${String(v||'').replace(/"/g,'""')}"`; }
 
-renderLog();
-
-document.addEventListener('keydown', e=>{
-  if(e.key === ' '){ e.preventDefault(); if(state.running) pauseTimer(); else document.getElementById('start').click(); }
-  if(e.key === 'n') nextRapid();
+/* UI bindings */
+el('start').addEventListener('click', ()=> {
+  if(state.running){ pauseTimer(); return; }
+  startSequence();
 });
+el('pause').addEventListener('click', ()=> {
+  if(state.running) pauseTimer(); else resumeTimer();
+});
+el('stop').addEventListener('click', stopTimer);
+el('next').addEventListener('click', nextWordManual);
+el('save').addEventListener('click', ()=> {
+  saveLog({mode: el('mode').value, when: new Date().toLocaleString(), topic: el('topic').value||'', words: (state.words||[]).join(' | '), score: el('score').value||''});
+  renderLog();
+  alert('Saved locally.');
+});
+el('export').addEventListener('click', exportCSV);
+el('clearLog').addEventListener('click', ()=> {
+  if(confirm('Clear saved sessions?')){ localStorage.removeItem('impromptuLogs'); renderLog(); }
+});
+
+/* keyboard */
+document.addEventListener('keydown', e=>{
+  if(e.key === ' '){ e.preventDefault(); if(state.running) pauseTimer(); else { if(state.words.length) resumeTimer(); else startSequence(); } }
+  if(e.key.toLowerCase() === 'n') nextWordManual();
+});
+
+/* initial render */
+renderLog();
+setPieProgress(0);
 </script>
 </body>
 </html>
