@@ -176,27 +176,47 @@ function setPieProgress(fraction){
 }
 
 function startSequence(){
-  // decide mode and words
+  // safer startSequence: validate inputs and ensure words exist
   state.mode = el('mode').value;
   state.perWordSecs = Math.max(1, parseInt(el('wordInterval').value||10));
+
+  // load bank (custom overrides preset)
+  const custom = (el('customList').value||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  let bank = custom.length ? custom : (presetBanks[el('preset').value] ? presetBanks[el('preset').value].slice() : presetBanks.default.slice());
+
   if(state.mode === 'triple'){
     const n = Math.max(1, parseInt(el('wordsCount').value||6));
-    const bank = loadPreset();
-    state.words = pickNRandom(n, bank);
+    // pick n unique random words
+    state.words = (function pickN(n, src){
+      const a = src.slice(), out = [];
+      while(out.length < n && a.length){
+        const i = Math.floor(Math.random()*a.length);
+        out.push(a.splice(i,1)[0]);
+      }
+      return out;
+    })(n, bank);
   } else {
-    state.words = loadPreset();
-    // rapid overrides: use rapidCount reps maybe; behave like repeating through array
     const reps = Math.max(1, parseInt(el('rapidCount').value||20));
-    // expand list to reps length by cycling
+    // create repeated sequence up to reps
+    if(!bank.length){
+      bank = ['Prompt 1']; // fallback
+    }
     const out = [];
-    for(let i=0;i<reps;i++) out.push( state.words[i % state.words.length] );
+    for(let i=0;i<reps;i++) out.push(bank[i % bank.length] || `Prompt ${i+1}`);
     state.words = out;
   }
+
+  if(!state.words || state.words.length === 0){
+    alert('No prompts available. Check preset selection or add custom prompts.');
+    return;
+  }
+
   state.index = 0;
   renderWordsArea();
   el('roundLabel').textContent = `${state.mode === 'triple' ? 'Triple Step' : 'Rapid Fire'} — ${state.words.length} items`;
   startWordTimer();
 }
+
 
 function startWordTimer(){
   stopTimer(); // clear existing
